@@ -1,8 +1,8 @@
-# Xion Hackron - Supply-Track
+# Xion Hackron - CLINKIT
 
 ## Solution Overview
 
-Our solution, **Supply-Track**, is a comprehensive logistics and inventory management system that leverages cutting-edge technology to optimize sales, reduce waste, and enhance efficiency. This system is designed to offer dynamic solutions for managing product inventory, crew schedules, and carbon footprints, making it the perfect tool for businesses seeking to streamline their logistics operations.
+Our solution, **CLINKIT**, is a comprehensive logistics and inventory management system that leverages cutting-edge technology to optimize sales, reduce waste, and enhance efficiency. This system is designed to offer dynamic solutions for managing product inventory, crew schedules, and carbon footprints, making it the perfect tool for businesses seeking to streamline their logistics operations.
 
 ### 1. Expiry-Based Dynamic Discounting  
 We have implemented a set of mathematical algorithms that dynamically adjust discounts based on product expiry dates. By doing so, we optimize sales and minimize waste, ensuring that products nearing expiration are sold off quickly at a discount. This solution not only boosts sales but also improves sustainability by reducing product wastage.
@@ -49,15 +49,21 @@ Using interactive maps and advanced algorithms, we provide real-time inventory t
 ## Formulas Used
 
 The mathematical formulas used in the system help optimize inventory management, carbon footprint calculations, and dynamic discounting. Below are the main formulas implemented:
+![Screenshot 2025-03-06 070130](https://github.com/user-attachments/assets/f5acf82c-dd4c-41d0-a89d-31083b20d52a)
 
 ### 1. **Dynamic Discounting Formula**  
 The discount rate \(D\) is calculated based on the number of days until a product expires, as follows:
 
 \[
 D = \frac{E - t}{E} \times \text{Base Discount Rate}
-\]
+\]![Screenshot 2025-03-06 070219](https://github.com/user-attachments/assets/05510b3e-41fa-4234-93e5-fc5b2ced3ed6)
+![Screenshot 2025-03-06 070633](https://github.com/user-attachments/assets/17febcf0-c87a-486d-9f0b-788f2d4a528c)
+![Screenshot 2025-03-06 070746](https://github.com/user-attachments/assets/4f28e000-4db9-4b00-b66e-da0a40804875)
+![Screenshot 2025-03-06 070903](https://github.com/user-attachments/assets/ebf8db0b-d0a8-423b-8fa4-05ebde52306a)
 
-Where:
+
+Where:![Screenshot 2025-03-06 070434](https://github.com/user-attachments/assets/c244f709-9006-4298-9e59-2781851948ca)
+
 - \(E\) = Expiry date of the product.
 - \(t\) = Current time.
 - \(D\) = Discount to be applied.
@@ -144,6 +150,7 @@ This will start a Streamlit application, where you can interact with the models 
 ## Contribute or Interact
 
 We welcome contributions to the **Supply-Track** system! Feel free to fork the repository, submit pull requests, or create issues for any improvements you suggest. You can also interact with the deployed site and explore its functionalities in real-time.
+![Screenshot 2025-03-06 071103](https://github.com/user-attachments/assets/3d69c439-5b1c-4c5f-8ccc-9b360b08ce48)
 
 ### Contributing
 To contribute, follow these steps:
