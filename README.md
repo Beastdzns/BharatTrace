@@ -2,6 +2,13 @@
 
 ## Solution Overview
 
+
+
+Uploading Supply Track and 11 more pages - Personal - Microsoft_ Edge 2025-03-06 09-36-29.mp4…
+
+
+
+
 Our solution, **CLINKIT**, is a comprehensive logistics and inventory management system that leverages cutting-edge technology to optimize sales, reduce waste, and enhance efficiency. This system is designed to offer dynamic solutions for managing product inventory, crew schedules, and carbon footprints, making it the perfect tool for businesses seeking to streamline their logistics operations.
 
 ### 1. Expiry-Based Dynamic Discounting  
