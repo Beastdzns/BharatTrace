@@ -1,4 +1,4 @@
-![Screenshot 2025-03-06 095112](https://github.com/user-attachments/assets/f97c6ecb-c6e1-47d8-adfb-c5284a63f278)# Xion Hackron - CLINKIT
+# Xion Hackron - CLINKIT
 
 ## Solution Overview
 
