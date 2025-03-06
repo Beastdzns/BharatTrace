@@ -1,0 +1,11 @@
+Route No.,Frequency,No. of Trucks,Truck Load Capacity,Route Density
+Route_1,10,5,20,120
+Route_2,15,8,25,100
+Route_3,12,6,22,140
+Route_4,18,7,30,110
+Route_5,20,10,28,130
+Route_6,8,4,18,110
+Route_7,14,6,24,125
+Route_8,16,9,26,115
+Route_9,11,5,21,100
+Route_10,13,7,23,105

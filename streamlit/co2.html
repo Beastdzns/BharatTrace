@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carbon Footprint Dashboard</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            font-weight: 600;
+        }
+
+        .truck-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            justify-items: center;
+            margin-top: 20px;
+        }
+
+        .truck-block {
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            padding: 25px;
+            width: 230px;
+            text-align: center;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .truck-block:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+        }
+
+        .truck-block h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.7em;
+            font-weight: 500;
+            color: #76c7c0;
+        }
+
+        .truck-block p {
+            font-size: 1.1em;
+            margin: 10px 0;
+            color: #ccc;
+        }
+
+        .truck-block span {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #f39c12;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Truck Carbon Footprint Dashboard</h1>
+    <div class="truck-container">
+        <!-- Truck blocks will be dynamically inserted here -->
+    </div>
+
+    <script>
+        // Number of trucks
+        const numTrucks = 10;
+        // Initial carbon footprint value (in grams)
+        let initialValue = 200;
+
+        // Different update rates (in milliseconds) for each truck
+        const updateRates = [500, 600, 700, 800, 1000, 900, 1100, 950, 1050, 1200];
+
+        // Create truck blocks dynamically
+        const container = document.querySelector('.truck-container');
+
+        for (let i = 1; i <= numTrucks; i++) {
+            const truckBlock = document.createElement('div');
+            truckBlock.classList.add('truck-block');
+            truckBlock.id = `truck${i}`;
+
+            // Add truck number and carbon footprint
+            truckBlock.innerHTML = `
+                <h3>Truck ${i}</h3>
+                <p>Carbon Footprint: <span id="truck${i}_value">${initialValue} grams</span></p>
+            `;
+
+            container.appendChild(truckBlock);
+        }
+
+        // Function to update carbon footprint values at different rates for each truck
+        const updateFootprints = () => {
+            for (let i = 1; i <= numTrucks; i++) {
+                const element = document.getElementById(`truck${i}_value`);
+                if (element) {
+                    let currentValue = parseFloat(element.innerText);
+                    currentValue += 0.2 + Math.random() * 0.5; // Increase value by a dynamic amount
+                    element.innerText = currentValue.toFixed(1) + ' grams';
+                }
+            }
+        };
+
+        // Update values at different rates for each truck
+        for (let i = 0; i < numTrucks; i++) {
+            setInterval(updateFootprints, updateRates[i]);
+        }
+    </script>
+
+</body>
+</html>
