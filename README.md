@@ -1,4 +1,4 @@
-# Xion Hackron - CLINKIT
+![Screenshot 2025-03-06 095112](https://github.com/user-attachments/assets/f97c6ecb-c6e1-47d8-adfb-c5284a63f278)# Xion Hackron - CLINKIT
 
 ## Solution Overview
 
@@ -23,15 +23,26 @@ Using interactive maps and advanced algorithms, we provide real-time inventory t
 
 1. **Dynamic Discounts**  
    - Automatically adjust discounts based on expiry dates.
-   
+   ![Screenshot 2025-03-06 095206](https://github.com/user-attachments/assets/38f8ddca-fc70-43d9-87ec-384e9c3904fe)
+
+![image](https://github.com/user-attachments/assets/056bcec0-d062-48c2-bf47-db7f23aab261)
+
+
 2. **Efficient Logistics**  
    - Optimize cargo truck operations and crew scheduling.
+
+![Screenshot 2025-03-06 095502](https://github.com/user-attachments/assets/25a5532c-054d-454b-8041-7ee3d0555c13)
+
    
 3. **Carbon Tracking**  
    - Monitor and reduce the carbon footprint of logistics activities.
+![Screenshot 2025-03-06 095146](https://github.com/user-attachments/assets/ffd4364b-9984-43fa-9600-3e1881aa9ce5)
+
    
 4. **NFC Integration**  
    - Real-time tracking and authentication via NFC technology.
+![Screenshot 2025-03-06 095423](https://github.com/user-attachments/assets/b3206a33-e6e3-4174-b829-81337c18ec07)
+
    
 5. **Inventory Optimization**  
    - Interactive maps for better stock management and supply chain optimization.
@@ -41,6 +52,8 @@ Using interactive maps and advanced algorithms, we provide real-time inventory t
    
 7. **Real-Time Monitoring**  
    - Continuous monitoring of inventory and logistics operations.
+![Screenshot 2025-03-06 095112](https://github.com/user-attachments/assets/f3ddac13-9c4e-423e-b508-dd3a4e3a3110)
+
    
 8. **Data-Driven Insights**  
    - Analytics and insights that empower decision-making.
