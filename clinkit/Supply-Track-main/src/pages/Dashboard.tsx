@@ -39,9 +39,49 @@ const Card: React.FC<CardProps> = ({ children, title, className = "" }) => (
   </div>
 );
 
-// Main Dashboard component
 const Dashboard: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<string>("Onions (Nashik)");
+  const [nfcData, setNfcData] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // --- NFC Reading Logic ---
+  const handleReadNfc = async () => {
+    setLoading(true);
+    try {
+      // @ts-ignore
+      if ("NDEFReader" in window) {
+        // @ts-ignore
+        const ndef = new window.NDEFReader();
+        await ndef.scan();
+        ndef.onreading = (event: any) => {
+          const decoder = new TextDecoder();
+          let recordData = "";
+          for (const record of event.message.records) {
+            if (record.recordType === "text") {
+              recordData += decoder.decode(record.data);
+            }
+          }
+          try {
+            const parsed = JSON.parse(recordData);
+            setNfcData(parsed);
+          } catch {
+            alert("Invalid NFC data format.");
+          }
+          setLoading(false);
+        };
+        ndef.onerror = () => {
+          alert("NFC read error.");
+          setLoading(false);
+        };
+      } else {
+        alert("NFC not supported on this device/browser.");
+        setLoading(false);
+      }
+    } catch (err) {
+      alert("NFC read failed: " + (err as any).message);
+      setLoading(false);
+    }
+  };
 
   // List of Maharashtra-specific agricultural products
   const products = ["Onions (Nashik)", "Grapes (Nashik/Sangli)", "Sugarcane", "Pomegranates (Solapur)", "Oranges (Nagpur)", "Alphonso Mangoes (Ratnagiri)"];
@@ -270,181 +310,150 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen font-sans">
-      <Navbar />
+      {/* Navbar */}
+      <nav className="bg-gradient-to-r from-teal-700 to-teal-900 text-white p-4 shadow-lg">
+        <div className="container mx-auto flex justify-between items-center">
+          <div className="text-2xl font-extrabold tracking-wide">Maharashtra Krishi Utpadan Tracker</div>
+        </div>
+      </nav>
 
       <div className="container mx-auto p-8 space-y-10">
-        {/* Dropdown to select product */}
-        <div className="flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-3xl shadow-lg">
-          <label htmlFor="product-select" className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">Select Maharashtra Product:</label>
-          <select
-            id="product-select"
-            className="bg-teal-100 text-teal-800 p-4 rounded-xl text-xl font-semibold shadow-md focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all duration-300"
-            value={selectedProduct}
-            onChange={(e) => setSelectedProduct(e.target.value)}
+        {/* NFC Read Section */}
+        <div className="flex flex-col items-center justify-center bg-white p-8 rounded-3xl shadow-lg mb-8">
+          <button
+            onClick={handleReadNfc}
+            disabled={loading}
+            className="bg-gradient-to-r from-teal-600 to-teal-800 text-white px-8 py-4 rounded-2xl text-2xl font-bold shadow-lg hover:scale-105 transition-transform duration-200 disabled:opacity-60"
           >
-            {products.map((product) => (
-              <option key={product} value={product}>
-                {product}
-              </option>
-            ))}
-          </select>
+            {loading ? "Reading NFC..." : "Read NFC Tag"}
+          </button>
+          {!nfcData && !loading && (
+            <div className="mt-6 text-gray-600 text-lg text-center">
+              Tap the "Read NFC Tag" button to scan a farm product's supply chain details.
+            </div>
+          )}
         </div>
 
-        {/* Statistics Cards */}
-        <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">Key Metrics</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-          <StatisticsCard
-            title="Farm Production"
-            value={`${currentProductData.farmer.quantity} Qtls`}
-            bgColor="bg-teal-600"
-          />
-          <StatisticsCard
-            title="Processed Quantity"
-            value={`${currentProductData.processor.quantity} Qtls`}
-            bgColor="bg-yellow-600"
-          />
-          <StatisticsCard
-            title="Distributed Quantity"
-            value={`${currentProductData.distributor.quantity} Qtls`}
-            bgColor="bg-blue-600"
-          />
-          <StatisticsCard
-            title="Retail Availability"
-            value={`${currentProductData.retailer.quantity} Qtls`}
-            bgColor="bg-red-600"
-          />
-          <StatisticsCard
-            title="Estimated Consumption"
-            value={`${currentProductData.consumer.quantity} Qtls`}
-            bgColor="bg-purple-600"
-          />
-        </div>
+        {/* Show Supply Chain Flow if NFC data is present */}
+        {nfcData && (
+          <>
+            {/* Product Title */}
+            <h2 className="text-3xl font-extrabold text-teal-800 text-center mb-8 drop-shadow-lg">
+              {nfcData.n} <span className="text-lg text-gray-500 font-normal">(ID: {nfcData.i})</span>
+            </h2>
 
-        {/* Farm-to-Fork Flow Diagram */}
-        <h2 className="text-3xl font-bold text-gray-800 text-center mb-6 pt-4">Farm-to-Fork Journey in Maharashtra</h2>
-        <Card className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 items-center justify-between text-center">
-
-            {/* Stage 1: Farmer */}
-            <div className="flex flex-col items-center">
-              <div className="bg-teal-100 p-4 rounded-full mb-3 shadow-md">
-                {/* Farmer Icon */}
-                <svg className="w-12 h-12 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            {/* Flow Diagram */}
+            <div className="bg-white rounded-3xl shadow-xl p-8 mb-10">
+              <h3 className="text-xl font-bold text-center text-gray-800 mb-8">Farm-to-Fork Journey</h3>
+              <div className="flex flex-col xl:flex-row items-center justify-between gap-8">
+                {/* Farmer */}
+                <div className="flex flex-col items-center w-full xl:w-1/4">
+                  <div className="bg-teal-100 p-5 rounded-full mb-3 shadow-md">
+                    {/* ...icon... */}
+                  </div>
+                  <div className="text-lg font-bold text-teal-800 mb-1">Farmer</div>
+                  <div className="text-gray-600 text-xs text-center">{nfcData.fh}</div>
+                </div>
+                {/* Arrow */}
+                <div className="hidden xl:block flex-grow border-b-2 border-dashed border-teal-300 mx-4"></div>
+                {/* Processor */}
+                <div className="flex flex-col items-center w-full xl:w-1/4">
+                  <div className="bg-yellow-100 p-5 rounded-full mb-3 shadow-md">
+                    {/* ...icon... */}
+                  </div>
+                  <div className="text-lg font-bold text-yellow-800 mb-1">Processor</div>
+                  <div className="text-gray-600 text-xs text-center">{nfcData.pp}</div>
+                </div>
+                {/* Arrow */}
+                <div className="hidden xl:block flex-grow border-b-2 border-dashed border-yellow-300 mx-4"></div>
+                {/* Distributor */}
+                <div className="flex flex-col items-center w-full xl:w-1/4">
+                  <div className="bg-blue-100 p-5 rounded-full mb-3 shadow-md">
+                    {/* ...icon... */}
+                  </div>
+                  <div className="text-lg font-bold text-blue-800 mb-1">Distributor</div>
+                  <div className="text-gray-600 text-xs text-center">{nfcData.dd}</div>
+                </div>
+                {/* Arrow */}
+                <div className="hidden xl:block flex-grow border-b-2 border-dashed border-blue-300 mx-4"></div>
+                {/* Retailer */}
+                <div className="flex flex-col items-center w-full xl:w-1/4">
+                  <div className="bg-red-100 p-5 rounded-full mb-3 shadow-md">
+                    {/* ...icon... */}
+                  </div>
+                  <div className="text-lg font-bold text-red-800 mb-1">Retailer</div>
+                  <div className="text-gray-600 text-xs text-center">{nfcData.rr}</div>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-teal-800">Farmer</h3>
-              <p className="text-sm text-gray-600">Harvested by {currentProductData.farmer.harvestedBy} on {currentProductData.farmer.productionDate} in {currentProductData.farmer.farmLocation}.</p>
             </div>
 
-            {/* Arrow */}
-            <div className="hidden xl:block flex-grow border-b-2 border-dashed border-gray-400 mx-4"></div>
-
-            {/* Stage 2: Processor */}
-            <div className="flex flex-col items-center">
-              <div className="bg-yellow-100 p-4 rounded-full mb-3 shadow-md">
-                {/* Processor Icon */}
-                <svg className="w-12 h-12 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            {/* Details Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {/* Farmer */}
+              <div className="bg-teal-50 rounded-2xl shadow-lg p-4">
+                <div className="text-lg font-bold text-teal-800 mb-2">Farmer</div>
+                <div className="text-gray-700 text-xs">
+                  <p>{nfcData.fh}</p>
+                  <p><strong>Q:</strong> {nfcData.fq}</p>
+                  <p><strong>D:</strong> {nfcData.fd}</p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-yellow-800">Processor</h3>
-              <p className="text-sm text-gray-600">Processed by {currentProductData.processor.processedBy} on {currentProductData.processor.processingDate} in {currentProductData.processor.processingLocation}.</p>
-            </div>
-
-            {/* Arrow */}
-            <div className="hidden xl:block flex-grow border-b-2 border-dashed border-gray-400 mx-4"></div>
-
-            {/* Stage 3: Distributor */}
-            <div className="flex flex-col items-center">
-              <div className="bg-blue-100 p-4 rounded-full mb-3 shadow-md">
-                {/* Distributor Icon */}
-                <svg className="w-12 h-12 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 17H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-3m-1 4v-4a2 2 0 00-2-2h-4a2 2 0 00-2 2v4m-2 0h6"></path></svg>
+              {/* Processor */}
+              <div className="bg-yellow-50 rounded-2xl shadow-lg p-4">
+                <div className="text-lg font-bold text-yellow-800 mb-2">Processor</div>
+                <div className="text-gray-700 text-xs">
+                  <p>{nfcData.pp}</p>
+                  <p><strong>Q:</strong> {nfcData.pq}</p>
+                  <p><strong>D:</strong> {nfcData.pd}</p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-blue-800">Distributor</h3>
-              <p className="text-sm text-gray-600">Distributed by {currentProductData.distributor.distributedBy} on {currentProductData.distributor.distributionDate} from {currentProductData.distributor.distributionHub}.</p>
-            </div>
-
-            {/* Arrow */}
-            <div className="hidden xl:block flex-grow border-b-2 border-dashed border-gray-400 mx-4"></div>
-
-            {/* Stage 4: Retailer */}
-            <div className="flex flex-col items-center">
-              <div className="bg-red-100 p-4 rounded-full mb-3 shadow-md">
-                {/* Retailer Icon */}
-                <svg className="w-12 h-12 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+              {/* Distributor */}
+              <div className="bg-blue-50 rounded-2xl shadow-lg p-4">
+                <div className="text-lg font-bold text-blue-800 mb-2">Distributor</div>
+                <div className="text-gray-700 text-xs">
+                  <p>{nfcData.dd}</p>
+                  <p><strong>Q:</strong> {nfcData.dq}</p>
+                  <p><strong>D:</strong> {nfcData.ddt}</p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-red-800">Retailer</h3>
-              <p className="text-sm text-gray-600">Available at {currentProductData.retailer.retailerName} from {currentProductData.retailer.retailDate} for {currentProductData.retailer.price}.</p>
-            </div>
-
-            {/* Arrow */}
-            <div className="hidden xl:block flex-grow border-b-2 border-dashed border-gray-400 mx-4"></div>
-
-            {/* Stage 5: Consumer */}
-            <div className="flex flex-col items-center">
-              <div className="bg-purple-100 p-4 rounded-full mb-3 shadow-md">
-                {/* Consumer Icon */}
-                <svg className="w-12 h-12 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M10 20v-2a3 3 0 013-3h4a3 3 0 013 3v2M3 8a6 6 0 016 6v7H3v-7a6 6 0 016-6z"></path></svg>
+              {/* Retailer */}
+              <div className="bg-red-50 rounded-2xl shadow-lg p-4">
+                <div className="text-lg font-bold text-red-800 mb-2">Retailer</div>
+                <div className="text-gray-700 text-xs">
+                  <p>{nfcData.rr}</p>
+                  <p><strong>Q:</strong> {nfcData.rq}</p>
+                  <p><strong>D:</strong> {nfcData.rdt}</p>
+                  <p><strong>P:</strong> {nfcData.rp}</p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-purple-800">Consumer</h3>
-              <p className="text-sm text-gray-600">Estimated consumption in {currentProductData.consumer.consumerLocation} from {currentProductData.consumer.purchaseDate}.</p>
             </div>
-
-          </div>
-        </Card>
-
-        {/* Detailed Data Cards */}
-        <h2 className="text-3xl font-bold text-gray-800 text-center mb-6 pt-4">Detailed Supply Chain Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-          <Card title="Farmer Details">
-            <div className="text-lg text-gray-700">
-              <p><strong>Harvested By:</strong> {currentProductData.farmer.harvestedBy}</p>
-              <p><strong>Farm Location:</strong> {currentProductData.farmer.farmLocation}</p>
-              <p><strong>Production Date:</strong> {currentProductData.farmer.productionDate}</p>
-              <p><strong>Quantity:</strong> {currentProductData.farmer.quantity} Quintals</p>
-              <p><strong>Notes:</strong> {currentProductData.farmer.notes}</p>
-            </div>
-          </Card>
-
-          <Card title="Processor Details">
-            <div className="text-lg text-gray-700">
-              <p><strong>Processed By:</strong> {currentProductData.processor.processedBy}</p>
-              <p><strong>Processing Location:</strong> {currentProductData.processor.processingLocation}</p>
-              <p><strong>Processing Date:</strong> {currentProductData.processor.processingDate}</p>
-              <p><strong>Quantity Processed:</strong> {currentProductData.processor.quantity} Quintals</p>
-              <p><strong>Notes:</strong> {currentProductData.processor.notes}</p>
-            </div>
-          </Card>
-
-          <Card title="Distributor Details">
-            <div className="text-lg text-gray-700">
-              <p><strong>Distributed By:</strong> {currentProductData.distributor.distributedBy}</p>
-              <p><strong>Distribution Hub:</strong> {currentProductData.distributor.distributionHub}</p>
-              <p><strong>Distribution Date:</strong> {currentProductData.distributor.distributionDate}</p>
-              <p><strong>Quantity Distributed:</strong> {currentProductData.distributor.quantity} Quintals</p>
-              <p><strong>Notes:</strong> {currentProductData.distributor.notes}</p>
-            </div>
-          </Card>
-
-          <Card title="Retailer Details">
-            <div className="text-lg text-gray-700">
-              <p><strong>Retailer Name:</strong> {currentProductData.retailer.retailerName}</p>
-              <p><strong>Retail Date:</strong> {currentProductData.retailer.retailDate}</p>
-              <p><strong>Price:</strong> {currentProductData.retailer.price}</p>
-              <p><strong>Quantity Available:</strong> {currentProductData.retailer.quantity} Quintals</p>
-              <p><strong>Notes:</strong> {currentProductData.retailer.notes}</p>
-            </div>
-          </Card>
-
-          <Card title="Consumer Details">
-            <div className="text-lg text-gray-700">
-              <p><strong>Location:</strong> {currentProductData.consumer.consumerLocation}</p>
-              <p><strong>Estimated Purchase Date:</strong> {currentProductData.consumer.purchaseDate}</p>
-              <p><strong>Estimated Consumption:</strong> {currentProductData.consumer.quantity} Quintals</p>
-              <p><strong>Notes:</strong> {currentProductData.consumer.notes}</p>
-            </div>
-          </Card>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
 };
 
 export default Dashboard;
+
+/*
+Insert the following JSON as a text record into the NFC tag (fits within 540 bytes):
+
+{
+  "i":"nfc1",
+  "n":"Onions",
+  "fh":"PatilFarms,Nashik",
+  "fq":1800,
+  "fd":"2025-02-10",
+  "pp":"MahaAgriProc,Lasalgaon",
+  "pq":1650,
+  "pd":"2025-02-15",
+  "dd":"PuneVeggie,APMC Pune",
+  "dq":1400,
+  "ddt":"2025-02-20",
+  "rr":"More,Pune",
+  "rq":1200,
+  "rdt":"2025-02-25",
+  "rp":"₹38/kg"
+}
+*/
