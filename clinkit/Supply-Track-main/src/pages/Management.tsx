@@ -1,216 +1,349 @@
 import React, { useState, useEffect } from 'react';
 import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-} from "recharts";
-import {
-    ArrowRight,
-    Box,
-    Car,
-    RefreshCw,
-    Search,
-} from "lucide-react";
+    Home,
+    Factory,
+    Truck,
+    ClipboardList,
+} from "lucide-react"; // More relevant icons
 
-// Item interface
-interface Item {
-    id: string;
-    name: string;
-    details: string;
-    stock: number;
-    state: 'Created' | 'Manufactured' | 'Shipped' | 'Received' | 'Delivered';
-    location: string;
-    owner: string;
-    createdAt: string;
-    updatedAt: string;
+// Item interface (renamed and expanded)
+interface ProductSupplyChain {
+    id: string; // Unique ID for the entire supply chain of a product
+    name: string; // Product name (e.g., "Onions (Nashik)")
+
+    // Farmer Details
+    farmer: {
+        quantity: number; // in Quintals
+        productionDate: string;
+        farmLocation: string;
+        harvestedBy: string;
+        notes?: string;
+        logDate: string;
+    };
+
+    // Processor Details (Optional, as not all items are processed)
+    processor?: {
+        quantity: number;
+        processingDate: string;
+        processedBy: string;
+        processingLocation: string;
+        notes?: string;
+        logDate: string;
+    };
+
+    // Distributor Details
+    distributor?: {
+        quantity: number;
+        distributionDate: string;
+        distributedBy: string;
+        distributionHub: string;
+        notes?: string;
+        logDate: string;
+    };
+
+    // Retailer Details
+    retailer?: {
+        quantity: number;
+        retailDate: string;
+        retailerName: string;
+        price: string;
+        notes?: string;
+        logDate: string;
+    };
 }
 
 const navItems = [
-    { name: "Overview", icon: Box },
-    { name: "Create Item", icon: ArrowRight },
-    { name: "View Item", icon: Search },
-    { name: "Update Item", icon: RefreshCw },
+    { name: "Dashboard", icon: Home, section: "Dashboard" },
+    { name: "Farmer Entry", icon: Home, section: "Farmer" },
+    { name: "Processor Entry", icon: Factory, section: "Processor" },
+    { name: "Distributor Entry", icon: Truck, section: "Distributor" },
+    { name: "Retailer Entry", icon: Home, section: "Retailer" },
 ];
 
+const ProductSupplyChainSystem: React.FC = () => {
+    const [supplyChainData, setSupplyChainData] = useState<ProductSupplyChain[]>([]);
+    const [activeSection, setActiveSection] = useState<string>('Dashboard');
 
-const InventoryManagementSystem: React.FC = () => {
-    const [items, setItems] = useState<Item[]>([]);
-    const [activeSection, setActiveSection] = useState<string>('Overview');
+    // State for common selection for Processor, Distributor, Retailer
+    const [selectedProductId, setSelectedProductId] = useState<string>('');
 
-    // Overview - No specific state needed here, using items state
+    // Farmer form states
+    const [farmerProductName, setFarmerProductName] = useState<string>('');
+    const [farmerQuantity, setFarmerQuantity] = useState<number>(0);
+    const [farmerProductionDate, setFarmerProductionDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [farmerFarmLocation, setFarmerFarmLocation] = useState<string>('');
+    const [farmerHarvestedBy, setFarmerHarvestedBy] = useState<string>('');
+    const [farmerNotes, setFarmerNotes] = useState<string>('');
 
-    // Create Item section states
-    const [createItemName, setCreateItemName] = useState<string>('');
-    const [createItemDetails, setCreateItemDetails] = useState<string>('');
-    const [createItemStock, setCreateItemStock] = useState<number>(0);
-    const [createItemLocation, setCreateItemLocation] = useState<string>('');
-    const [createItemOwner, setCreateItemOwner] = useState<string>('');
+    // Processor form states
+    const [processorQuantity, setProcessorQuantity] = useState<number>(0);
+    const [processorProcessingDate, setProcessorProcessingDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [processorProcessedBy, setProcessorProcessedBy] = useState<string>('');
+    const [processorProcessingLocation, setProcessorProcessingLocation] = useState<string>('');
+    const [processorNotes, setProcessorNotes] = useState<string>('');
 
-    // View Item section states
-    const [viewItemId, setViewItemId] = useState<string>('');
-    const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+    // Distributor form states
+    const [distributorQuantity, setDistributorQuantity] = useState<number>(0);
+    const [distributorDistributionDate, setDistributorDistributionDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [distributorDistributedBy, setDistributorDistributedBy] = useState<string>('');
+    const [distributorDistributionHub, setDistributorDistributionHub] = useState<string>('');
+    const [distributorNotes, setDistributorNotes] = useState<string>('');
 
-    // Update Item section states
-    const [updateItemId, setUpdateItemId] = useState<string>('');
-    const [updateItemName, setUpdateItemName] = useState<string>('');
-    const [updateItemDetails, setUpdateItemDetails] = useState<string>('');
-    const [updateItemStock, setUpdateItemStock] = useState<number>(0);
-    const [updateItemState, setUpdateItemState] = useState<Item['state']>('Created');
-    const [updateItemLocation, setUpdateItemLocation] = useState<string>('');
-    const [updateItemOwner, setUpdateItemOwner] = useState<string>('');
+    // Retailer form states
+    const [retailerQuantity, setRetailerQuantity] = useState<number>(0);
+    const [retailerRetailDate, setRetailerRetailDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [retailerRetailerName, setRetailerRetailerName] = useState<string>('');
+    const [retailerPrice, setRetailerPrice] = useState<string>('');
+    const [retailerNotes, setRetailerNotes] = useState<string>('');
+
+    // Dashboard specific state
+    const [dashboardSelectedProductId, setDashboardSelectedProductId] = useState<string>('');
 
 
     useEffect(() => {
-        loadItemsFromStorage();
+        loadSupplyChainData();
     }, []);
 
     useEffect(() => {
-        saveItemsToStorage();
-    }, [items]);
+        saveSupplyChainData();
+    }, [supplyChainData]);
 
-    const loadItemsFromStorage = () => {
-        const storedItems = localStorage.getItem('inventoryItems');
-        if (storedItems) {
-            setItems(JSON.parse(storedItems));
+    const loadSupplyChainData = () => {
+        const storedData = localStorage.getItem('supplyChainData');
+        if (storedData) {
+            setSupplyChainData(JSON.parse(storedData));
         }
     };
 
-    const saveItemsToStorage = () => {
-        localStorage.setItem('inventoryItems', JSON.stringify(items));
+    const saveSupplyChainData = () => {
+        localStorage.setItem('supplyChainData', JSON.stringify(supplyChainData));
     };
-
-    // --- Section Handlers ---
 
     const handleSectionChange = (sectionName: string) => {
         setActiveSection(sectionName);
-        setSelectedItem(null); // Clear selected item when section changes
+        // Reset specific selections if needed when changing sections
+        setSelectedProductId('');
+        setDashboardSelectedProductId('');
     };
 
-    // --- Create Item Handlers ---
-    const handleCreateItem = () => {
-      if (!createItemName ) { // Details, location and owner can be empty but name must be there.
-          alert('Please fill in item name.');
-          return;
-      }
-
-      const existingItemIndex = items.findIndex(item => item.name === createItemName);
-
-      if (existingItemIndex > -1) {
-          // Item with the same name exists, so update the stock
-          const updatedItems = items.map((item, index) => {
-              if (index === existingItemIndex) {
-                  return {
-                      ...item,
-                      stock: item.stock + createItemStock,
-                      updatedAt: new Date().toISOString(),
-                  };
-              }
-              return item;
-          });
-          setItems(updatedItems);
-          alert(`Stock quantity for '${createItemName}' updated successfully!`);
-      } else {
-          // Item with the name does not exist, create new item
-          const newItem: Item = {
-              id: Date.now().toString(),
-              name: createItemName,
-              details: createItemDetails,
-              stock: createItemStock,
-              state: 'Created', // Default state
-              location: createItemLocation,
-              owner: createItemOwner,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-          };
-          setItems([...items, newItem]);
-          alert(`Item '${createItemName}' created successfully!`);
-      }
-
-      clearCreateItemForm();
-  };
-
-
-    const clearCreateItemForm = () => {
-        setCreateItemName('');
-        setCreateItemDetails('');
-        setCreateItemStock(0);
-        setCreateItemLocation('');
-        setCreateItemOwner('');
-    };
-
-    // --- View Item Handlers ---
-    const handleViewItem = () => {
-        const item = items.find(item => item.id === viewItemId);
-        if (item) {
-            setSelectedItem(item);
-        } else {
-            alert('Item not found.');
-            setSelectedItem(null);
-        }
-    };
-
-    // --- Update Item Handlers ---
-    const handleUpdateItem = () => {
-        const itemIndex = items.findIndex(item => item.id === updateItemId);
-        if (itemIndex === -1) {
-            alert('Item not found for update.');
+    // --- Farmer Section Handlers ---
+    const handleFarmerSubmit = () => {
+        if (!farmerProductName || !farmerQuantity || !farmerFarmLocation || !farmerHarvestedBy) {
+            alert('Please fill in all required farmer details (Product Name, Quantity, Farm Location, Harvested By).');
             return;
         }
 
-        const updatedItem: Item = {
-            ...items[itemIndex],
-            name: updateItemName || items[itemIndex].name, // Keep old name if new is empty
-            details: updateItemDetails || items[itemIndex].details,
-            stock: updateItemStock !== undefined ? updateItemStock : items[itemIndex].stock, // Keep old stock if new is undefined
-            state: updateItemState,
-            location: updateItemLocation || items[itemIndex].location,
-            owner: updateItemOwner || items[itemIndex].owner,
-            updatedAt: new Date().toISOString(),
+        const newChain: ProductSupplyChain = {
+            id: Date.now().toString(), // Unique ID for this product's chain
+            name: farmerProductName,
+            farmer: {
+                quantity: farmerQuantity,
+                productionDate: farmerProductionDate,
+                farmLocation: farmerFarmLocation,
+                harvestedBy: farmerHarvestedBy,
+                notes: farmerNotes,
+                logDate: new Date().toLocaleString(),
+            },
+        };
+        setSupplyChainData([...supplyChainData, newChain]);
+        alert(`Farmer details for '${farmerProductName}' logged successfully!`);
+        clearFarmerForm();
+    };
+
+    const clearFarmerForm = () => {
+        setFarmerProductName('');
+        setFarmerQuantity(0);
+        setFarmerProductionDate(new Date().toISOString().split('T')[0]);
+        setFarmerFarmLocation('');
+        setFarmerHarvestedBy('');
+        setFarmerNotes('');
+    };
+
+    // --- Processor Section Handlers ---
+    const handleProcessorSubmit = () => {
+        if (!selectedProductId || !processorQuantity || !processorProcessedBy || !processorProcessingLocation) {
+            alert('Please select a product and fill in all required processor details.');
+            return;
+        }
+
+        const chainIndex = supplyChainData.findIndex(chain => chain.id === selectedProductId);
+        if (chainIndex === -1) {
+            alert('Product not found in chain.');
+            return;
+        }
+        if (supplyChainData[chainIndex].processor) {
+            alert('Processor details for this product already exist. Please update if needed from "Update Item" functionality (not implemented yet for multi-stage updates).');
+            return;
+        }
+
+        const updatedChain: ProductSupplyChain = {
+            ...supplyChainData[chainIndex],
+            processor: {
+                quantity: processorQuantity,
+                processingDate: processorProcessingDate,
+                processedBy: processorProcessedBy,
+                processingLocation: processorProcessingLocation,
+                notes: processorNotes,
+                logDate: new Date().toLocaleString(),
+            },
         };
 
-        const newItems = [...items];
-        newItems[itemIndex] = updatedItem;
-        setItems(newItems);
-        clearUpdateItemForm();
-        alert('Item updated successfully!');
+        const newSupplyChainData = [...supplyChainData];
+        newSupplyChainData[chainIndex] = updatedChain;
+        setSupplyChainData(newSupplyChainData);
+        alert(`Processor details for '${updatedChain.name}' logged successfully!`);
+        clearProcessorForm();
     };
 
-    const clearUpdateItemForm = () => {
-        setUpdateItemId('');
-        setUpdateItemName('');
-        setUpdateItemDetails('');
-        setUpdateItemStock(0);
-        setUpdateItemState('Created');
-        setUpdateItemLocation('');
-        setUpdateItemOwner('');
+    const clearProcessorForm = () => {
+        setSelectedProductId('');
+        setProcessorQuantity(0);
+        setProcessorProcessingDate(new Date().toISOString().split('T')[0]);
+        setProcessorProcessedBy('');
+        setProcessorProcessingLocation('');
+        setProcessorNotes('');
     };
+
+    // --- Distributor Section Handlers ---
+    const handleDistributorSubmit = () => {
+        if (!selectedProductId || !distributorQuantity || !distributorDistributedBy || !distributorDistributionHub) {
+            alert('Please select a product and fill in all required distributor details.');
+            return;
+        }
+
+        const chainIndex = supplyChainData.findIndex(chain => chain.id === selectedProductId);
+        if (chainIndex === -1) {
+            alert('Product not found in chain.');
+            return;
+        }
+        if (!supplyChainData[chainIndex].processor) {
+            alert('Processor details must be logged before distributor details.');
+            return;
+        }
+        if (supplyChainData[chainIndex].distributor) {
+            alert('Distributor details for this product already exist.');
+            return;
+        }
+
+
+        const updatedChain: ProductSupplyChain = {
+            ...supplyChainData[chainIndex],
+            distributor: {
+                quantity: distributorQuantity,
+                distributionDate: distributorDistributionDate,
+                distributedBy: distributorDistributedBy,
+                distributionHub: distributorDistributionHub,
+                notes: distributorNotes,
+                logDate: new Date().toLocaleString(),
+            },
+        };
+
+        const newSupplyChainData = [...supplyChainData];
+        newSupplyChainData[chainIndex] = updatedChain;
+        setSupplyChainData(newSupplyChainData);
+        alert(`Distributor details for '${updatedChain.name}' logged successfully!`);
+        clearDistributorForm();
+    };
+
+    const clearDistributorForm = () => {
+        setSelectedProductId('');
+        setDistributorQuantity(0);
+        setDistributorDistributionDate(new Date().toISOString().split('T')[0]);
+        setDistributorDistributedBy('');
+        setDistributorDistributionHub('');
+        setDistributorNotes('');
+    };
+
+    // --- Retailer Section Handlers ---
+    const handleRetailerSubmit = () => {
+        if (!selectedProductId || !retailerQuantity || !retailerRetailerName || !retailerPrice) {
+            alert('Please select a product and fill in all required retailer details.');
+            return;
+        }
+
+        const chainIndex = supplyChainData.findIndex(chain => chain.id === selectedProductId);
+        if (chainIndex === -1) {
+            alert('Product not found in chain.');
+            return;
+        }
+        if (!supplyChainData[chainIndex].distributor) {
+            alert('Distributor details must be logged before retailer details.');
+            return;
+        }
+        if (supplyChainData[chainIndex].retailer) {
+            alert('Retailer details for this product already exist.');
+            return;
+        }
+
+        const updatedChain: ProductSupplyChain = {
+            ...supplyChainData[chainIndex],
+            retailer: {
+                quantity: retailerQuantity,
+                retailDate: retailerRetailDate,
+                retailerName: retailerRetailerName,
+                price: retailerPrice,
+                notes: retailerNotes,
+                logDate: new Date().toLocaleString(),
+            },
+        };
+
+        const newSupplyChainData = [...supplyChainData];
+        newSupplyChainData[chainIndex] = updatedChain;
+        setSupplyChainData(newSupplyChainData);
+        alert(`Retailer details for '${updatedChain.name}' logged successfully!`);
+        clearRetailerForm();
+    };
+
+    const clearRetailerForm = () => {
+        setSelectedProductId('');
+        setRetailerQuantity(0);
+        setRetailerRetailDate(new Date().toISOString().split('T')[0]);
+        setRetailerRetailerName('');
+        setRetailerPrice('');
+        setRetailerNotes('');
+    };
+
+
+    // --- Helper for Product Dropdowns ---
+    const getAvailableProductsForNextStage = (currentStage: 'farmer' | 'processor' | 'distributor' | 'retailer') => {
+        if (currentStage === 'farmer') {
+            return supplyChainData.filter(p => !p.processor); // Products that have only farmer data
+        } else if (currentStage === 'processor') {
+            return supplyChainData.filter(p => p.farmer && !p.processor); // Products with farmer data, but no processor data
+        } else if (currentStage === 'distributor') {
+            return supplyChainData.filter(p => p.processor && !p.distributor); // Products with processor data, but no distributor data
+        } else if (currentStage === 'retailer') {
+            return supplyChainData.filter(p => p.distributor && !p.retailer); // Products with distributor data, but no retailer data
+        } else {
+            return [];
+        }
+    };
+
+    // --- Dashboard Specific Logic ---
+    const dashboardProductData = supplyChainData.find(chain => chain.id === dashboardSelectedProductId);
 
 
     return (
-        <div className="min-h-screen bg-gray-900 text-gray-100">
+        <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
             <div className="container mx-auto p-6">
                 <div className="flex gap-6">
                     {/* Sidebar */}
-                    <aside className="w-1/4 bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                        <div className="p-6 bg-gray-700">
-                            <h2 className="text-xl font-bold text-white">Inventory Dashboard</h2>
+                    <aside className="w-1/4 bg-gray-800 rounded-xl shadow-lg overflow-hidden h-fit sticky top-6">
+                        <div className="p-6 bg-teal-700">
+                            <h2 className="text-xl font-bold text-white">Supply Chain Tracker</h2>
                         </div>
                         <nav className="p-4">
-                            {navItems.map(({ name, icon: Icon }) => (
+                            {navItems.map(({ name, icon: Icon, section }) => (
                                 <button
                                     key={name}
-                                    onClick={() => handleSectionChange(name)}
-                                    className={`w-full mb-2 p-3 rounded-lg text-left flex items-center gap-3 transition-all
-                                        ${activeSection === name
-                                            ? "bg-gray-600 text-white font-semibold"
-                                            : "hover:bg-gray-700 text-gray-300"
+                                    onClick={() => handleSectionChange(section)}
+                                    className={`w-full mb-2 p-3 rounded-lg text-left flex items-center gap-3 transition-all duration-200
+                                        ${activeSection === section
+                                            ? "bg-teal-600 text-white font-semibold shadow-md"
+                                            : "hover:bg-gray-700 text-gray-300 hover:text-white"
                                         }`}
                                 >
-                                    <Icon size={18} />
+                                    <Icon size={20} />
                                     {name}
                                 </button>
                             ))}
@@ -218,195 +351,442 @@ const InventoryManagementSystem: React.FC = () => {
                     </aside>
 
                     {/* Main Content */}
-                    <main className="flex-1">
-                        {activeSection === 'Overview' && (
-                            <section className="space-y-6">
-                                <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
-                                    <h2 className="text-2xl font-bold mb-4 text-gray-100">Inventory Overview</h2>
-                                    {items.length > 0 ? (
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-full table-auto text-left">
-                                                <thead className="text-gray-300">
-                                                    <tr>
-                                                        <th className="px-4 py-2">ID</th>
-                                                        <th className="px-4 py-2">Name</th>
-                                                        <th className="px-4 py-2">Stock</th>
-                                                        <th className="px-4 py-2">State</th>
-                                                        <th className="px-4 py-2">Location</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="text-gray-100">
-                                                    {items.map(item => (
-                                                        <tr key={item.id} className="border-b border-gray-700">
-                                                            <td className="px-4 py-3">{item.id}</td>
-                                                            <td className="px-4 py-3">{item.name}</td>
-                                                            <td className="px-4 py-3">{item.stock}</td>
-                                                            <td className="px-4 py-3">{item.state}</td>
-                                                            <td className="px-4 py-3">{item.location}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
+                    <main className="flex-1 space-y-8">
+                        {/* Dashboard Section */}
+                        {activeSection === 'Dashboard' && (
+                            <section className="bg-gray-800 p-8 rounded-xl shadow-lg">
+                                <h2 className="text-3xl font-bold text-teal-300 mb-6">Supply Chain Dashboard</h2>
+
+                                <div className="mb-8">
+                                    <label htmlFor="dashboard-product-select" className="block text-gray-300 text-lg font-semibold mb-2">Select Product Chain:</label>
+                                    <select
+                                        id="dashboard-product-select"
+                                        className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-teal-500 focus:border-teal-500"
+                                        value={dashboardSelectedProductId}
+                                        onChange={(e) => setDashboardSelectedProductId(e.target.value)}
+                                    >
+                                        <option value="">-- Select a Product --</option>
+                                        {supplyChainData.map(chain => (
+                                            <option key={chain.id} value={chain.id}>
+                                                {chain.name} (ID: {chain.id})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {dashboardProductData ? (
+                                    <>
+                                        <h3 className="text-2xl font-bold text-gray-100 mb-4">{dashboardProductData.name} - Farm to Fork Journey</h3>
+
+                                        {/* Farm-to-Fork Flow Diagram (Visual) */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 items-center justify-between text-center">
+
+                                            {/* Stage 1: Farmer */}
+                                            <div className="flex flex-col items-center bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                                                <div className="bg-teal-600 p-4 rounded-full mb-3 shadow-lg">
+                                                    <Home className="w-10 h-10 text-white" />
+                                                </div>
+                                                <h4 className="text-xl font-semibold text-teal-300">Farmer</h4>
+                                                <p className="text-sm text-gray-400"><strong>By:</strong> {dashboardProductData.farmer.harvestedBy}</p>
+                                                <p className="text-sm text-gray-400"><strong>Location:</strong> {dashboardProductData.farmer.farmLocation}</p>
+                                                <p className="text-sm text-gray-400"><strong>Quantity:</strong> {dashboardProductData.farmer.quantity} Qtls</p>
+                                                <p className="text-xs text-gray-500 mt-2">Logged: {dashboardProductData.farmer.logDate}</p>
+                                            </div>
+
+                                            {/* Arrow (Desktop only, responsive adjustments for mobile) */}
+                                            <div className="hidden xl:block flex-grow border-b-2 border-dashed border-gray-600 mx-4"></div>
+
+                                            {/* Stage 2: Processor */}
+                                            {dashboardProductData.processor && (
+                                                <>
+                                                    <div className="flex flex-col items-center bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                                                        <div className="bg-yellow-600 p-4 rounded-full mb-3 shadow-lg">
+                                                            <Factory className="w-10 h-10 text-white" />
+                                                        </div>
+                                                        <h4 className="text-xl font-semibold text-yellow-300">Processor</h4>
+                                                        <p className="text-sm text-gray-400"><strong>By:</strong> {dashboardProductData.processor.processedBy}</p>
+                                                        <p className="text-sm text-gray-400"><strong>Location:</strong> {dashboardProductData.processor.processingLocation}</p>
+                                                        <p className="text-sm text-gray-400"><strong>Quantity:</strong> {dashboardProductData.processor.quantity} Qtls</p>
+                                                        <p className="text-xs text-gray-500 mt-2">Logged: {dashboardProductData.processor.logDate}</p>
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {/* Arrow */}
+                                            {dashboardProductData.processor && <div className="hidden xl:block flex-grow border-b-2 border-dashed border-gray-600 mx-4"></div>}
+
+
+                                            {/* Stage 3: Distributor */}
+                                            {dashboardProductData.distributor && (
+                                                <>
+                                                    <div className="flex flex-col items-center bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                                                        <div className="bg-blue-600 p-4 rounded-full mb-3 shadow-lg">
+                                                            <Truck className="w-10 h-10 text-white" />
+                                                        </div>
+                                                        <h4 className="text-xl font-semibold text-blue-300">Distributor</h4>
+                                                        <p className="text-sm text-gray-400"><strong>By:</strong> {dashboardProductData.distributor.distributedBy}</p>
+                                                        <p className="text-sm text-gray-400"><strong>Hub:</strong> {dashboardProductData.distributor.distributionHub}</p>
+                                                        <p className="text-sm text-gray-400"><strong>Quantity:</strong> {dashboardProductData.distributor.quantity} Qtls</p>
+                                                        <p className="text-xs text-gray-500 mt-2">Logged: {dashboardProductData.distributor.logDate}</p>
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {/* Arrow */}
+                                            {dashboardProductData.distributor && <div className="hidden xl:block flex-grow border-b-2 border-dashed border-gray-600 mx-4"></div>}
+
+
+                                            {/* Stage 4: Retailer */}
+                                            {dashboardProductData.retailer && (
+                                                <>
+                                                    <div className="flex flex-col items-center bg-gray-700 p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                                                        <div className="bg-red-600 p-4 rounded-full mb-3 shadow-lg">
+                                                            <Home className="w-10 h-10 text-white" />
+                                                        </div>
+                                                        <h4 className="text-xl font-semibold text-red-300">Retailer</h4>
+                                                        <p className="text-sm text-gray-400"><strong>Store:</strong> {dashboardProductData.retailer.retailerName}</p>
+                                                        <p className="text-sm text-gray-400"><strong>Price:</strong> {dashboardProductData.retailer.price}</p>
+                                                        <p className="text-sm text-gray-400"><strong>Quantity:</strong> {dashboardProductData.retailer.quantity} Qtls</p>
+                                                        <p className="text-xs text-gray-500 mt-2">Logged: {dashboardProductData.retailer.logDate}</p>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <p className="text-gray-400">No items in inventory yet.</p>
-                                    )}
-                                </div>
 
-                                <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
-                                    <h3 className="text-xl font-semibold mb-4 text-gray-100">Stock Level Chart</h3>
-                                    <ResponsiveContainer width="100%" height={300}>
-                                        <BarChart data={items.map(item => ({ name: item.name, stock: item.stock }))}>
-                                            <XAxis dataKey="name" stroke="#ddd" />
-                                            <YAxis stroke="#ddd" />
-                                            <Tooltip contentStyle={{ backgroundColor: '#333', color: '#fff' }} />
-                                            <Legend wrapperStyle={{ color: '#ddd' }} />
-                                            <Bar dataKey="stock" fill="#8884d8" radius={[5, 5, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </section>
-                        )}
+                                        {/* Detailed Data */}
+                                        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                                            <div className="bg-gray-700 p-6 rounded-lg shadow-md">
+                                                <h4 className="text-xl font-semibold text-gray-100 mb-3">Farmer Details</h4>
+                                                <p><span className="font-bold text-gray-300">Product Name:</span> {dashboardProductData.name}</p>
+                                                <p><span className="font-bold text-gray-300">Quantity:</span> {dashboardProductData.farmer.quantity} Qtls</p>
+                                                <p><span className="font-bold text-gray-300">Production Date:</span> {dashboardProductData.farmer.productionDate}</p>
+                                                <p><span className="font-bold text-gray-300">Farm Location:</span> {dashboardProductData.farmer.farmLocation}</p>
+                                                <p><span className="font-bold text-gray-300">Harvested By:</span> {dashboardProductData.farmer.harvestedBy}</p>
+                                                {dashboardProductData.farmer.notes && <p><span className="font-bold text-gray-300">Notes:</span> {dashboardProductData.farmer.notes}</p>}
+                                                <p className="text-xs text-gray-500 mt-2">Last Updated: {dashboardProductData.farmer.logDate}</p>
+                                            </div>
 
-                        {activeSection === 'Create Item' && (
-                            <section className="bg-gray-800 p-6 rounded-xl shadow-lg space-y-4">
-                                <h2 className="text-2xl font-bold text-gray-100">Create New Item</h2>
-                                <input
-                                    type="text"
-                                    placeholder="Item Name"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={createItemName}
-                                    onChange={(e) => setCreateItemName(e.target.value)}
-                                />
-                                <textarea
-                                    placeholder="Item Details"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 h-24"
-                                    value={createItemDetails}
-                                    onChange={(e) => setCreateItemDetails(e.target.value)}
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="Stock Quantity"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={createItemStock}
-                                    onChange={(e) => setCreateItemStock(Number(e.target.value))}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Location"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={createItemLocation}
-                                    onChange={(e) => setCreateItemLocation(e.target.value)}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Owner"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={createItemOwner}
-                                    onChange={(e) => setCreateItemOwner(e.target.value)}
-                                />
-                                <button
-                                    onClick={handleCreateItem}
-                                    className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"
-                                >
-                                    Create Item
-                                </button>
-                            </section>
-                        )}
+                                            {dashboardProductData.processor && (
+                                                <div className="bg-gray-700 p-6 rounded-lg shadow-md">
+                                                    <h4 className="text-xl font-semibold text-gray-100 mb-3">Processor Details</h4>
+                                                    <p><span className="font-bold text-gray-300">Quantity Processed:</span> {dashboardProductData.processor.quantity} Qtls</p>
+                                                    <p><span className="font-bold text-gray-300">Processing Date:</span> {dashboardProductData.processor.processingDate}</p>
+                                                    <p><span className="font-bold text-gray-300">Processed By:</span> {dashboardProductData.processor.processedBy}</p>
+                                                    <p><span className="font-bold text-gray-300">Processing Location:</span> {dashboardProductData.processor.processingLocation}</p>
+                                                    {dashboardProductData.processor.notes && <p><span className="font-bold text-gray-300">Notes:</span> {dashboardProductData.processor.notes}</p>}
+                                                    <p className="text-xs text-gray-500 mt-2">Last Updated: {dashboardProductData.processor.logDate}</p>
+                                                </div>
+                                            )}
 
-                        {activeSection === 'View Item' && (
-                            <section className="bg-gray-800 p-6 rounded-xl shadow-lg space-y-4">
-                                <h2 className="text-2xl font-bold text-gray-100">View Item Details</h2>
-                                <input
-                                    type="text"
-                                    placeholder="Enter Item ID"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={viewItemId}
-                                    onChange={(e) => setViewItemId(e.target.value)}
-                                />
-                                <button
-                                    onClick={handleViewItem}
-                                    className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"
-                                >
-                                    View Item
-                                </button>
+                                            {dashboardProductData.distributor && (
+                                                <div className="bg-gray-700 p-6 rounded-lg shadow-md">
+                                                    <h4 className="text-xl font-semibold text-gray-100 mb-3">Distributor Details</h4>
+                                                    <p><span className="font-bold text-gray-300">Quantity Distributed:</span> {dashboardProductData.distributor.quantity} Qtls</p>
+                                                    <p><span className="font-bold text-gray-300">Distribution Date:</span> {dashboardProductData.distributor.distributionDate}</p>
+                                                    <p><span className="font-bold text-gray-300">Distributed By:</span> {dashboardProductData.distributor.distributedBy}</p>
+                                                    <p><span className="font-bold text-gray-300">Distribution Hub:</span> {dashboardProductData.distributor.distributionHub}</p>
+                                                    {dashboardProductData.distributor.notes && <p><span className="font-bold text-gray-300">Notes:</span> {dashboardProductData.distributor.notes}</p>}
+                                                    <p className="text-xs text-gray-500 mt-2">Last Updated: {dashboardProductData.distributor.logDate}</p>
+                                                </div>
+                                            )}
 
-                                {selectedItem && (
-                                    <div className="mt-6 p-4 bg-gray-700 rounded-lg">
-                                        <h3 className="text-xl font-semibold text-gray-100 mb-2">{selectedItem.name}</h3>
-                                        <p><span className="font-bold text-gray-300">Details:</span> {selectedItem.details}</p>
-                                        <p><span className="font-bold text-gray-300">Stock:</span> {selectedItem.stock}</p>
-                                        <p><span className="font-bold text-gray-300">State:</span> {selectedItem.state}</p>
-                                        <p><span className="font-bold text-gray-300">Location:</span> {selectedItem.location}</p>
-                                        <p><span className="font-bold text-gray-300">Owner:</span> {selectedItem.owner}</p>
-                                        <p><span className="font-bold text-gray-300">Created At:</span> {new Date(selectedItem.createdAt).toLocaleString()}</p>
-                                        <p><span className="font-bold text-gray-300">Updated At:</span> {new Date(selectedItem.updatedAt).toLocaleString()}</p>
-                                    </div>
+                                            {dashboardProductData.retailer && (
+                                                <div className="bg-gray-700 p-6 rounded-lg shadow-md">
+                                                    <h4 className="text-xl font-semibold text-gray-100 mb-3">Retailer Details</h4>
+                                                    <p><span className="font-bold text-gray-300">Quantity Available:</span> {dashboardProductData.retailer.quantity} Qtls</p>
+                                                    <p><span className="font-bold text-gray-300">Retail Date:</span> {dashboardProductData.retailer.retailDate}</p>
+                                                    <p><span className="font-bold text-gray-300">Retailer Name:</span> {dashboardProductData.retailer.retailerName}</p>
+                                                    <p><span className="font-bold text-gray-300">Price:</span> {dashboardProductData.retailer.price}</p>
+                                                    {dashboardProductData.retailer.notes && <p><span className="font-bold text-gray-300">Notes:</span> {dashboardProductData.retailer.notes}</p>}
+                                                    <p className="text-xs text-gray-500 mt-2">Last Updated: {dashboardProductData.retailer.logDate}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p className="text-gray-400">Please select a product to view its supply chain journey.</p>
                                 )}
                             </section>
                         )}
 
-                        {activeSection === 'Update Item' && (
-                            <section className="bg-gray-800 p-6 rounded-xl shadow-lg space-y-4">
-                                <h2 className="text-2xl font-bold text-gray-100">Update Item Details</h2>
+                        {/* Farmer Entry Section */}
+                        {activeSection === 'Farmer' && (
+                            <section className="bg-gray-800 p-8 rounded-xl shadow-lg space-y-6">
+                                <h2 className="text-3xl font-bold text-teal-300">Farmer Product Entry</h2>
+                                <p className="text-gray-400">Enter details of the product harvested at the farm.</p>
+
                                 <input
                                     type="text"
-                                    placeholder="Item ID to Update"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={updateItemId}
-                                    onChange={(e) => setUpdateItemId(e.target.value)}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="New Name (Optional)"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={updateItemName}
-                                    onChange={(e) => setUpdateItemName(e.target.value)}
-                                />
-                                <textarea
-                                    placeholder="New Details (Optional)"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 h-24"
-                                    value={updateItemDetails}
-                                    onChange={(e) => setUpdateItemDetails(e.target.value)}
+                                    placeholder="Product Name (e.g., Nashik Onions)"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                    value={farmerProductName}
+                                    onChange={(e) => setFarmerProductName(e.target.value)}
+                                    required
                                 />
                                 <input
                                     type="number"
-                                    placeholder="New Stock (Optional)"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={updateItemStock}
-                                    onChange={(e) => setUpdateItemStock(Number(e.target.value))}
+                                    placeholder="Quantity (in Quintals)"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                    value={farmerQuantity === 0 ? '' : farmerQuantity}
+                                    onChange={(e) => setFarmerQuantity(Number(e.target.value))}
+                                    required
                                 />
-                                <select
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={updateItemState}
-                                    onChange={(e) => setUpdateItemState(e.target.value as Item['state'])}
-                                >
-                                    <option value="Created">Created</option>
-                                    <option value="Manufactured">Manufactured</option>
-                                    <option value="Shipped">Shipped</option>
-                                    <option value="Received">Received</option>
-                                    <option value="Delivered">Delivered</option>
-                                </select>
+                                <label htmlFor="farmerProductionDate" className="block text-gray-400">Production/Harvest Date:</label>
                                 <input
-                                    type="text"
-                                    placeholder="New Location (Optional)"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={updateItemLocation}
-                                    onChange={(e) => setUpdateItemLocation(e.target.value)}
+                                    id="farmerProductionDate"
+                                    type="date"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                    value={farmerProductionDate}
+                                    onChange={(e) => setFarmerProductionDate(e.target.value)}
+                                    required
                                 />
                                 <input
                                     type="text"
-                                    placeholder="New Owner (Optional)"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100"
-                                    value={updateItemOwner}
-                                    onChange={(e) => setUpdateItemOwner(e.target.value)}
+                                    placeholder="Farm Location (e.g., Pimpalgaon Baswant, Nashik)"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                    value={farmerFarmLocation}
+                                    onChange={(e) => setFarmerFarmLocation(e.target.value)}
+                                    required
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Harvested By (Farmer Name/Co-op)"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                    value={farmerHarvestedBy}
+                                    onChange={(e) => setFarmerHarvestedBy(e.target.value)}
+                                    required
+                                />
+                                <textarea
+                                    placeholder="Additional Notes (e.g., organic, specific variety)"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 h-24 focus:ring-teal-500 focus:border-teal-500"
+                                    value={farmerNotes}
+                                    onChange={(e) => setFarmerNotes(e.target.value)}
                                 />
                                 <button
-                                    onClick={handleUpdateItem}
-                                    className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"
+                                    onClick={handleFarmerSubmit}
+                                    className="w-full bg-teal-600 text-white p-3 rounded-lg hover:bg-teal-700 transition-colors duration-200 text-lg font-semibold"
                                 >
-                                    Update Item
+                                    Log Farmer Data
                                 </button>
+                            </section>
+                        )}
+
+                        {/* Processor Entry Section */}
+                        {activeSection === 'Processor' && (
+                            <section className="bg-gray-800 p-8 rounded-xl shadow-lg space-y-6">
+                                <h2 className="text-3xl font-bold text-teal-300">Processor Data Entry</h2>
+                                <p className="text-gray-400">Select a product chain to add processing details.</p>
+
+                                <label htmlFor="processor-product-select" className="block text-gray-300 text-lg font-semibold mb-2">Select Product to Process:</label>
+                                <select
+                                    id="processor-product-select"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-teal-500 focus:border-teal-500"
+                                    value={selectedProductId}
+                                    onChange={(e) => setSelectedProductId(e.target.value)}
+                                >
+                                    <option value="">-- Select a Product from Farmer Stage --</option>
+                                    {getAvailableProductsForNextStage('processor').map(chain => (
+                                        <option key={chain.id} value={chain.id}>
+                                            {chain.name} (ID: {chain.id})
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {selectedProductId && (
+                                    <>
+                                        <input
+                                            type="number"
+                                            placeholder="Quantity Processed (in Quintals)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={processorQuantity === 0 ? '' : processorQuantity}
+                                            onChange={(e) => setProcessorQuantity(Number(e.target.value))}
+                                            required
+                                        />
+                                        <label htmlFor="processorProcessingDate" className="block text-gray-400">Processing Date:</label>
+                                        <input
+                                            id="processorProcessingDate"
+                                            type="date"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={processorProcessingDate}
+                                            onChange={(e) => setProcessorProcessingDate(e.target.value)}
+                                            required
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Processed By (Company Name)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={processorProcessedBy}
+                                            onChange={(e) => setProcessorProcessedBy(e.target.value)}
+                                            required
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Processing Location (e.g., Lasalgaon, Nashik)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={processorProcessingLocation}
+                                            onChange={(e) => setProcessorProcessingLocation(e.target.value)}
+                                            required
+                                        />
+                                        <textarea
+                                            placeholder="Additional Notes (e.g., cleaned, sorted, packaged)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 h-24 focus:ring-teal-500 focus:border-teal-500"
+                                            value={processorNotes}
+                                            onChange={(e) => setProcessorNotes(e.target.value)}
+                                        />
+                                        <button
+                                            onClick={handleProcessorSubmit}
+                                            className="w-full bg-teal-600 text-white p-3 rounded-lg hover:bg-teal-700 transition-colors duration-200 text-lg font-semibold"
+                                        >
+                                            Log Processor Data
+                                        </button>
+                                    </>
+                                )}
+                            </section>
+                        )}
+
+                        {/* Distributor Entry Section */}
+                        {activeSection === 'Distributor' && (
+                            <section className="bg-gray-800 p-8 rounded-xl shadow-lg space-y-6">
+                                <h2 className="text-3xl font-bold text-teal-300">Distributor Data Entry</h2>
+                                <p className="text-gray-400">Select a processed product chain to add distribution details.</p>
+
+                                <label htmlFor="distributor-product-select" className="block text-gray-300 text-lg font-semibold mb-2">Select Product to Distribute:</label>
+                                <select
+                                    id="distributor-product-select"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-teal-500 focus:border-teal-500"
+                                    value={selectedProductId}
+                                    onChange={(e) => setSelectedProductId(e.target.value)}
+                                >
+                                    <option value="">-- Select a Product from Processor Stage --</option>
+                                    {getAvailableProductsForNextStage('distributor').map(chain => (
+                                        <option key={chain.id} value={chain.id}>
+                                            {chain.name} (ID: {chain.id})
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {selectedProductId && (
+                                    <>
+                                        <input
+                                            type="number"
+                                            placeholder="Quantity Distributed (in Quintals)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={distributorQuantity === 0 ? '' : distributorQuantity}
+                                            onChange={(e) => setDistributorQuantity(Number(e.target.value))}
+                                            required
+                                        />
+                                        <label htmlFor="distributorDistributionDate" className="block text-gray-400">Distribution Date:</label>
+                                        <input
+                                            id="distributorDistributionDate"
+                                            type="date"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={distributorDistributionDate}
+                                            onChange={(e) => setDistributorDistributionDate(e.target.value)}
+                                            required
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Distributed By (Logistics Company)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={distributorDistributedBy}
+                                            onChange={(e) => setDistributorDistributedBy(e.target.value)}
+                                            required
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Distribution Hub (e.g., APMC Market, Pune)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={distributorDistributionHub}
+                                            onChange={(e) => setDistributorDistributionHub(e.target.value)}
+                                            required
+                                        />
+                                        <textarea
+                                            placeholder="Additional Notes (e.g., transported by cold chain, specific routes)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 h-24 focus:ring-teal-500 focus:border-teal-500"
+                                            value={distributorNotes}
+                                            onChange={(e) => setDistributorNotes(e.target.value)}
+                                        />
+                                        <button
+                                            onClick={handleDistributorSubmit}
+                                            className="w-full bg-teal-600 text-white p-3 rounded-lg hover:bg-teal-700 transition-colors duration-200 text-lg font-semibold"
+                                        >
+                                            Log Distributor Data
+                                        </button>
+                                    </>
+                                )}
+                            </section>
+                        )}
+
+                        {/* Retailer Entry Section */}
+                        {activeSection === 'Retailer' && (
+                            <section className="bg-gray-800 p-8 rounded-xl shadow-lg space-y-6">
+                                <h2 className="text-3xl font-bold text-teal-300">Retailer Data Entry</h2>
+                                <p className="text-gray-400">Select a distributed product chain to add retail details.</p>
+
+                                <label htmlFor="retailer-product-select" className="block text-gray-300 text-lg font-semibold mb-2">Select Product to Retail:</label>
+                                <select
+                                    id="retailer-product-select"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-teal-500 focus:border-teal-500"
+                                    value={selectedProductId}
+                                    onChange={(e) => setSelectedProductId(e.target.value)}
+                                >
+                                    <option value="">-- Select a Product from Distributor Stage --</option>
+                                    {getAvailableProductsForNextStage('retailer').map(chain => (
+                                        <option key={chain.id} value={chain.id}>
+                                            {chain.name} (ID: {chain.id})
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {selectedProductId && (
+                                    <>
+                                        <input
+                                            type="number"
+                                            placeholder="Quantity Available for Sale (in Quintals)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={retailerQuantity === 0 ? '' : retailerQuantity}
+                                            onChange={(e) => setRetailerQuantity(Number(e.target.value))}
+                                            required
+                                        />
+                                        <label htmlFor="retailerRetailDate" className="block text-gray-400">Retail Start Date:</label>
+                                        <input
+                                            id="retailerRetailDate"
+                                            type="date"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={retailerRetailDate}
+                                            onChange={(e) => setRetailerRetailDate(e.target.value)}
+                                            required
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Retailer Name (e.g., More Supermarket)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={retailerRetailerName}
+                                            onChange={(e) => setRetailerRetailerName(e.target.value)}
+                                            required
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Price (e.g., ₹38/kg)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 focus:ring-teal-500 focus:border-teal-500"
+                                            value={retailerPrice}
+                                            onChange={(e) => setRetailerPrice(e.target.value)}
+                                            required
+                                        />
+                                        <textarea
+                                            placeholder="Additional Notes (e.g., shelf life, special offers)"
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 placeholder-gray-400 h-24 focus:ring-teal-500 focus:border-teal-500"
+                                            value={retailerNotes}
+                                            onChange={(e) => setRetailerNotes(e.target.value)}
+                                        />
+                                        <button
+                                            onClick={handleRetailerSubmit}
+                                            className="w-full bg-teal-600 text-white p-3 rounded-lg hover:bg-teal-700 transition-colors duration-200 text-lg font-semibold"
+                                        >
+                                            Log Retailer Data
+                                        </button>
+                                    </>
+                                )}
                             </section>
                         )}
                     </main>
@@ -416,4 +796,4 @@ const InventoryManagementSystem: React.FC = () => {
     );
 };
 
-export default InventoryManagementSystem;
+export default ProductSupplyChainSystem;

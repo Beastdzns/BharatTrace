@@ -11,7 +11,7 @@ export function Navbar() {
                 <div className="flex items-center justify-between h-16">
                     <Link to="/" className="flex items-center space-x-2">
                         <Truck className="w-8 h-8 text-emerald-400" />
-                        <span className="font-bold text-xl">Clinkit</span>
+                        <span className="font-bold text-xl">भारतट्रेस</span>
                     </Link>
 
                     <div className="flex space-x-4">

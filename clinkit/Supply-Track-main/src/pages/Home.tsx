@@ -14,7 +14,7 @@ const Home: React.FC = () => {
             </div>
           </div>
           <h1 className="text-5xl font-extrabold sm:text-6xl md:text-7xl">
-            CLINKIT
+            भारतट्रेस
             <span className="block text-yellow-800"></span>
           </h1>
           <p className="mt-6 max-w-2xl mx-auto text-xl sm:text-2xl">
