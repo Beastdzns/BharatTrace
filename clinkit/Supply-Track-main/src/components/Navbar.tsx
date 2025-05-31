@@ -17,8 +17,8 @@ export function Navbar() {
                     <div className="flex space-x-4">
                         <NavItem to="/" icon={<Home className="w-4 h-4" />} label="Home" isActive={isActive('/')} />
                         <NavItem to="/map" icon={<Map className="w-4 h-4" />} label="Interactive Map" isActive={isActive('/map')} />
-                        <NavItem to="/dashboard" icon={<BarChart3 className="w-4 h-4" />} label="Dashboard" isActive={isActive('/dashboard')} />
-                        <NavItem to="/management" icon={<Settings className="w-4 h-4" />} label="Management" isActive={isActive('/management')} />
+                        <NavItem to="/dashboard" icon={<BarChart3 className="w-4 h-4" />} label="NFC" isActive={isActive('/dashboard')} />
+                        <NavItem to="/management" icon={<Settings className="w-4 h-4" />} label="Application" isActive={isActive('/management')} />
                         <NavItem to="/carbon" icon={<Settings className="w-4 h-4" />} label="Carbon Foot Print" isActive={isActive('/carbon')} />
                         <NavItem to="/set-expiry" icon={<Settings className="w-4 h-4" />} label="Set Expiry" isActive={isActive('/set-expiry')} />
 

@@ -31,7 +31,7 @@ const MaharashtraMap: React.FC = () => {
         .selectAll("path")
         .data(states.features)
         .join("path")
-        .attr("d", path)
+        .attr("d", (d: any) => path(d) as string)
         .attr("fill", "#3b82f6")
         .attr("stroke", "#1e3a8a")
         .on("mouseover", function () {
